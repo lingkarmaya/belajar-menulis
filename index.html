@@ -35,7 +35,7 @@
 html, body {
   width: 100%;
   height: var(--app-height);
-  background: #E9ECF1;                 /* warna gutter saat di layar lebar */
+  background: var(--bg);
   font-family: 'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', cursive;
   overflow: hidden;
   overscroll-behavior: none;          /* cegah pull-to-refresh & bounce */
@@ -48,15 +48,14 @@ html, body {
   inset: 0;
 }
 
-/* ===== APP SHELL (bingkai HP) =====
-   Di HP: memenuhi lebar penuh. Di layar lebar: dipatok & di-tengah-kan
-   supaya tampil seperti aplikasi ponsel, bukan melar seperti desktop. */
-#screen-home, #screen-practice, #screen-free {
-  max-width: 480px;
+/* ===== RESPONSIVE: konten home dipusatkan, tetap mengikuti lebar layar.
+   Layar penuh dipakai; di layar sangat lebar konten dipusatkan agar rapi. */
+#screen-home .app-title,
+#screen-home .tabs,
+#screen-home .char-grid {
+  width: 100%;
+  max-width: 760px;
   margin-inline: auto;
-  background: var(--bg);
-  position: relative;
-  box-shadow: 0 0 40px rgba(0,0,0,.10);
 }
 
 /* ===== HOME ===== */
@@ -107,12 +106,22 @@ html, body {
 
 .char-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, 1fr);   /* default (HP): tetap 5 kolom */
   gap: 9px;
   overflow-y: auto;
   flex: 1;
   padding-bottom: 4px;
+  align-content: start;                    /* baris menumpuk dari atas, tidak melar */
   -webkit-overflow-scrolling: touch;
+}
+
+/* Layar lebih lebar: jumlah kolom mengikuti lebar layar, ukuran tombol dibatasi */
+@media (min-width: 560px) {
+  .char-grid {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 96px));
+    justify-content: center;
+    gap: 12px;
+  }
 }
 
 .char-btn {
