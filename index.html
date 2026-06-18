@@ -2,8 +2,22 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Belajar Menulis</title>
+
+<!-- ===== PWA ===== -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FF6B6B">
+<meta name="description" content="Aplikasi belajar menulis angka dan huruf untuk anak-anak Indonesia.">
+
+<!-- iOS / Apple -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Belajar Menulis">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -15,24 +29,43 @@
   --purple: #A29BFE;
   --pink: #FD79A8;
   --dark: #2C3E50;
+  --app-height: 100vh; /* di-update via JS = window.innerHeight, paling akurat di HP */
 }
 
 html, body {
-  width: 100%; height: 100vh;
-  background: var(--bg);
+  width: 100%;
+  height: var(--app-height);
+  background: #E9ECF1;                 /* warna gutter saat di layar lebar */
   font-family: 'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', cursive;
   overflow: hidden;
+  overscroll-behavior: none;          /* cegah pull-to-refresh & bounce */
   user-select: none;
   -webkit-user-select: none;
+  -webkit-text-size-adjust: 100%;     /* cegah teks membesar otomatis */
+  text-size-adjust: 100%;
   touch-action: none;
+  position: fixed;                    /* kunci layar, tidak bisa di-scroll */
+  inset: 0;
+}
+
+/* ===== APP SHELL (bingkai HP) =====
+   Di HP: memenuhi lebar penuh. Di layar lebar: dipatok & di-tengah-kan
+   supaya tampil seperti aplikasi ponsel, bukan melar seperti desktop. */
+#screen-home, #screen-practice, #screen-free {
+  max-width: 480px;
+  margin-inline: auto;
+  background: var(--bg);
+  position: relative;
+  box-shadow: 0 0 40px rgba(0,0,0,.10);
 }
 
 /* ===== HOME ===== */
 #screen-home {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  padding: 12px 14px;
+  height: var(--app-height);
+  padding: calc(12px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right))
+           calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
   gap: 10px;
 }
 
@@ -106,13 +139,15 @@ html, body {
 #screen-practice {
   display: none;
   flex-direction: column;
-  height: 100vh;
+  height: var(--app-height);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: calc(8px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right))
+           8px calc(12px + env(safe-area-inset-left));
   gap: 8px;
   background: white;
   box-shadow: 0 2px 8px rgba(0,0,0,.1);
@@ -192,7 +227,8 @@ html, body {
 #screen-free {
   display: none;
   flex-direction: column;
-  height: 100vh;
+  height: var(--app-height);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .palette-row {
@@ -442,6 +478,27 @@ const fctx       = fcvs.getContext('2d');
 let CW, CH;   // canvas dimensions (square)
 
 // ─────────────────────────────────────────────
+// MOBILE: tinggi layar nyata (window.innerHeight)
+// Mengatasi masalah 100vh yang ikut menghitung address bar di HP.
+// ─────────────────────────────────────────────
+function setAppHeight() {
+  document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+}
+setAppHeight();
+window.addEventListener('resize', setAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 200));
+
+// ─────────────────────────────────────────────
+// PWA: daftarkan service worker (butuh HTTPS / localhost)
+// ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err =>
+      console.warn('SW gagal didaftarkan:', err));
+  });
+}
+
+// ─────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -545,7 +602,7 @@ function attachListeners() {
   fcvs.addEventListener('pointercancel', freeUp);
 
   window.addEventListener('resize', () => {
-    if (visible('practice')) { resizePractice(); resetDots(); }
+    if (visible('practice')) { resizePractice(); }
     if (visible('free'))     { resizeFree(); redrawFree(); }
   });
 }
